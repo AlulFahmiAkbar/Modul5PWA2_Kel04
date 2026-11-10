@@ -17,7 +17,7 @@ import './SplashScreen.css'
  * @param {Function} [props.onFinish] - Callback when splash finishes / is dismissed
  * @param {number} [props.duration=5400] - Duration in ms before auto-fading
  */
-export default function SplashScreen({ onFinish, duration = 5400 }) {
+export default function SplashScreen({ onFinish, duration = 4400 }) {
   const [isHit, setIsHit] = useState(false)
   const [isFading, setIsFading] = useState(false)
   const dismissedRef = useRef(false)

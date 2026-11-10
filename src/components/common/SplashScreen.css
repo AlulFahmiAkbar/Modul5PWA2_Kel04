@@ -27,14 +27,14 @@
 .splash-mark {
   position: absolute;
   left: 50%;
-  top: 29%;
-  width: min(90vw, 58vh, 650px);
+  top: 23%;
+  width: min(85vw, 48vh, 520px);
   aspect-ratio: 1;
   object-fit: contain;
   transform: translate(-50%, 0) translateX(-100vw) scale(0.94);
   opacity: 0;
-  animation: splash-rush 2s cubic-bezier(0.15, 0.8, 0.18, 1) 0.05s forwards,
-             splash-glow 1.5s ease-out 2.55s forwards;
+  animation: splash-rush 1.8s cubic-bezier(0.15, 0.8, 0.18, 1) 0.05s forwards,
+             splash-glow 1.5s ease-out 2.2s forwards;
   mix-blend-mode: normal;
   pointer-events: none;
 }
@@ -87,13 +87,13 @@
 
 .splash-brand {
   position: absolute;
-  top: 81%;
+  top: 78%;
   left: 0;
   width: 100%;
   text-align: center;
   opacity: 0;
   transform: translateY(12px);
-  animation: splash-brandIn 0.9s ease-out 3.8s forwards;
+  animation: splash-brandIn 0.8s ease-out 2.6s forwards;
   color: #f6f3ec;
   pointer-events: none;
 }
@@ -271,11 +271,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .splash-overlay *,
-  .splash-overlay *::before,
-  .splash-overlay *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
+/* Ensure animations always play smoothly on all displays (including laptop/desktop) */
+.splash-overlay {
+  will-change: opacity, transform;
 }
