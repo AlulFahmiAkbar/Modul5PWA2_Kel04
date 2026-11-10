@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { RefreshCw, Plus, Loader, AlertCircle, PackageOpen } from 'lucide-react'
 import { useGuns } from '../hooks/useGuns'
 import GUNS_LOCAL from '../data/guns'
@@ -6,6 +6,7 @@ import GunCard from '../components/gun/GunCard'
 import GunDetail from '../components/gun/GunDetail'
 import AdvancedFilter from '../components/common/AdvancedFilter'
 import ConfirmModal from '../components/modals/ConfirmModal'
+import Pagination from '../components/common/Pagination'
 import gunService from '../services/gunService'
 import {
   matchesSearch,
@@ -43,6 +44,10 @@ export default function Catalog({ onNavigate }) {
   const [sortKey, setSortKey] = useState('name')
   const [sortOrder, setSortOrder] = useState('asc')
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 6
+
   const categories = useMemo(() => extractCategories(rawGuns), [rawGuns])
 
   const filteredGuns = useMemo(() => {
@@ -51,6 +56,19 @@ export default function Catalog({ onNavigate }) {
     )
     return sortItems(result, sortKey, sortOrder)
   }, [rawGuns, search, activeCategory, sortKey, sortOrder])
+
+  // Reset to first page when filtering or sorting changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, activeCategory, sortKey, sortOrder])
+
+  // Paginated slice
+  const totalPages = Math.ceil(filteredGuns.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedGuns = useMemo(() => {
+    return filteredGuns.slice(startIndex, endIndex)
+  }, [filteredGuns, startIndex, endIndex])
 
   // ---- detail view ----
   const [selectedGun, setSelectedGun] = useState(null)
@@ -164,9 +182,9 @@ export default function Catalog({ onNavigate }) {
         )}
 
         {/* Product grid */}
-        {filteredGuns.length > 0 && (
+        {paginatedGuns.length > 0 && (
           <ul className="stock">
-            {filteredGuns.map((gun) => (
+            {paginatedGuns.map((gun) => (
               <GunCard
                 key={gun.id || gun.name}
                 gun={gun}
@@ -176,6 +194,21 @@ export default function Catalog({ onNavigate }) {
               />
             ))}
           </ul>
+        )}
+
+        {/* Pagination controls */}
+        {!loading && filteredGuns.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              setCurrentPage(page)
+              window.scrollTo({ top: 120, behavior: 'smooth' })
+            }}
+            totalItems={filteredGuns.length}
+            startIndex={startIndex}
+            endIndex={endIndex}
+          />
         )}
 
         {useLocal && (

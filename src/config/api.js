@@ -4,7 +4,10 @@ import axios from 'axios'
 // Base URL & Supabase Key Configuration
 // Read from environment variables (.env)
 // ---------------------------------------------------------------------------
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim()
+// Bersihkan akhiran '/rest/v1' atau trailing slash jika ada agar tidak terjadi duplikasi URL
+const BASE_URL = rawBaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '')
+
 const SUPABASE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   import.meta.env.VITE_SUPABASE_ANON_KEY ||

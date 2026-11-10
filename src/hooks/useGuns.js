@@ -9,7 +9,11 @@ import gunService from '../services/gunService'
 // will remain an empty array so the UI can show a proper error state.
 // ---------------------------------------------------------------------------
 
-export function useGuns(params = {}) {
+// In-memory query cache with 5 minutes TTL
+const queryCache = new Map()
+const CACHE_TTL_MS = 5 * 60 * 1000
+
+export function useGuns(params = {}, options = { enableCache: true }) {
   const [guns, setGuns] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -18,7 +22,19 @@ export function useGuns(params = {}) {
   // Serialise params so the effect re-runs when they change.
   const paramKey = JSON.stringify(params)
 
-  const fetchGuns = useCallback(async () => {
+  const fetchGuns = useCallback(async (forceRefresh = false) => {
+    // 1. Check in-memory query cache
+    const cachedEntry = queryCache.get(paramKey)
+    const isCacheValid = cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_TTL_MS)
+
+    if (options.enableCache && isCacheValid && !forceRefresh) {
+      setGuns(cachedEntry.guns)
+      setPagination(cachedEntry.pagination)
+      setLoading(false)
+      setError(null)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -26,8 +42,18 @@ export function useGuns(params = {}) {
       const response = await gunService.getGuns(params)
 
       if (response.success) {
-        setGuns(response.data || [])
-        setPagination(response.pagination || null)
+        const fetchedData = response.data || []
+        const paginationData = response.pagination || null
+        setGuns(fetchedData)
+        setPagination(paginationData)
+
+        if (options.enableCache) {
+          queryCache.set(paramKey, {
+            guns: fetchedData,
+            pagination: paginationData,
+            timestamp: Date.now(),
+          })
+        }
       } else {
         setError(response.message || 'Failed to fetch products.')
       }
@@ -38,13 +64,18 @@ export function useGuns(params = {}) {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramKey])
+  }, [paramKey, options.enableCache])
 
   useEffect(() => {
     fetchGuns()
   }, [fetchGuns])
 
-  return { guns, loading, error, pagination, refetch: fetchGuns }
+  const refetch = useCallback(() => {
+    queryCache.delete(paramKey)
+    return fetchGuns(true)
+  }, [paramKey, fetchGuns])
+
+  return { guns, loading, error, pagination, refetch }
 }
 
 // ---------------------------------------------------------------------------
